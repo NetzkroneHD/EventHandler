@@ -5,6 +5,7 @@ import de.netzkronehd.eventhandler.example.events.DoneStuffEvent;
 import de.netzkronehd.eventhandler.example.events.MakeStuffEvent;
 
 import java.util.Random;
+import java.util.logging.Logger;
 
 public class Example {
 
@@ -12,7 +13,7 @@ public class Example {
     private EventHandler eventHandler;
 
     public Example() {
-        eventHandler = new EventHandler();
+        eventHandler = new EventHandler(Logger.getGlobal());
         eventHandler.registerListener(new MakeStuffListener());
     }
 

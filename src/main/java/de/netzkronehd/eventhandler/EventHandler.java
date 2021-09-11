@@ -14,15 +14,14 @@ public class EventHandler {
 
     private static EventBus eventBus;
 
-    public EventHandler() {
+    public EventHandler(Logger logger) {
         if(eventBus == null) {
-            eventBus = new EventBus(Logger.getGlobal());
+            eventBus = new EventBus(logger);
         }
     }
 
     public void registerListener(Listener listener) {
-        for ( Method method : listener.getClass().getDeclaredMethods() )
-        {
+        for ( Method method : listener.getClass().getDeclaredMethods()) {
             Preconditions.checkArgument( !method.isAnnotationPresent( Subscribe.class ),
                     "Listener %s has registered using deprecated subscribe annotation! Please update to @EventHandler.", listener );
         }
