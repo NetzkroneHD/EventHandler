@@ -54,16 +54,8 @@ public class EventBus {
                             });
                     continue;
                 }
-                Map<Byte, Set<Method>> prioritiesMap = handler.get(params[0]);
-                if (prioritiesMap == null) {
-                    prioritiesMap = new HashMap<>();
-                    handler.put(params[0], prioritiesMap);
-                }
-                Set<Method> priority = prioritiesMap.get(annotation.priority());
-                if (priority == null) {
-                    priority = new HashSet<>();
-                    prioritiesMap.put(annotation.priority(), priority);
-                }
+                Map<Byte, Set<Method>> prioritiesMap = handler.computeIfAbsent(params[0], k -> new HashMap<>());
+                Set<Method> priority = prioritiesMap.computeIfAbsent(annotation.priority(), k -> new HashSet<>());
                 priority.add(m);
             }
         }
@@ -75,17 +67,9 @@ public class EventBus {
         lock.lock();
         try {
             for (Map.Entry<Class<?>, Map<Byte, Set<Method>>> e : handler.entrySet()) {
-                Map<Byte, Map<Object, Method[]>> prioritiesMap = byListenerAndPriority.get(e.getKey());
-                if (prioritiesMap == null) {
-                    prioritiesMap = new HashMap<>();
-                    byListenerAndPriority.put(e.getKey(), prioritiesMap);
-                }
+                Map<Byte, Map<Object, Method[]>> prioritiesMap = byListenerAndPriority.computeIfAbsent(e.getKey(), k -> new HashMap<>());
                 for (Map.Entry<Byte, Set<Method>> entry : e.getValue().entrySet()) {
-                    Map<Object, Method[]> currentPriorityMap = prioritiesMap.get(entry.getKey());
-                    if (currentPriorityMap == null) {
-                        currentPriorityMap = new HashMap<>();
-                        prioritiesMap.put(entry.getKey(), currentPriorityMap);
-                    }
+                    Map<Object, Method[]> currentPriorityMap = prioritiesMap.computeIfAbsent(entry.getKey(), k -> new HashMap<>());
                     currentPriorityMap.put(listener, entry.getValue().toArray(new Method[0]));
                 }
                 bakeHandlers(e.getKey());
@@ -122,35 +106,27 @@ public class EventBus {
         }
     }
 
-    private void bakeHandlers(Class<?> eventClass)
-    {
-        Map<Byte, Map<Object, Method[]>> handlersByPriority = byListenerAndPriority.get( eventClass );
-        if ( handlersByPriority != null )
-        {
-            List<EventHandlerMethod> handlersList = new ArrayList<>( handlersByPriority.size() * 2 );
+    private void bakeHandlers(Class<?> eventClass) {
+        Map<Byte, Map<Object, Method[]>> handlersByPriority = byListenerAndPriority.get(eventClass);
+        if (handlersByPriority != null) {
+            List<EventHandlerMethod> handlersList = new ArrayList<>(handlersByPriority.size() * 2);
 
-            // Either I'm really tired, or the only way we can iterate between Byte.MIN_VALUE and Byte.MAX_VALUE inclusively,
-            // with only a byte on the stack is by using a do {} while() format loop.
+
             byte value = Byte.MIN_VALUE;
-            do
-            {
-                Map<Object, Method[]> handlersByListener = handlersByPriority.get( value );
-                if ( handlersByListener != null )
-                {
-                    for ( Map.Entry<Object, Method[]> listenerHandlers : handlersByListener.entrySet() )
-                    {
-                        for ( Method method : listenerHandlers.getValue() )
-                        {
-                            EventHandlerMethod ehm = new EventHandlerMethod( listenerHandlers.getKey(), method );
-                            handlersList.add( ehm );
+            do {
+                Map<Object, Method[]> handlersByListener = handlersByPriority.get(value);
+                if (handlersByListener != null) {
+                    for (Map.Entry<Object, Method[]> listenerHandlers : handlersByListener.entrySet()) {
+                        for (Method method : listenerHandlers.getValue()) {
+                            EventHandlerMethod ehm = new EventHandlerMethod(listenerHandlers.getKey(), method);
+                            handlersList.add(ehm);
                         }
                     }
                 }
-            } while ( value++ < Byte.MAX_VALUE );
-            byEventBaked.put( eventClass, handlersList.toArray( new EventHandlerMethod[ 0 ] ) );
-        } else
-        {
-            byEventBaked.remove( eventClass );
+            } while (value++ < Byte.MAX_VALUE);
+            byEventBaked.put(eventClass, handlersList.toArray(new EventHandlerMethod[0]));
+        } else {
+            byEventBaked.remove(eventClass);
         }
     }
 

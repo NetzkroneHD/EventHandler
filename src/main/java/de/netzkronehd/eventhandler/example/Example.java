@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 public class Example {
 
 
-    private EventHandler eventHandler;
+    private final EventHandler eventHandler;
 
     public Example() {
         eventHandler = new EventHandler(Logger.getGlobal());
@@ -19,9 +19,9 @@ public class Example {
 
     public void makeStuff() {
         final Random r = new Random();
-        double resutl = r.nextDouble()/r.nextDouble();
+        double result = r.nextDouble()/r.nextDouble();
 
-        MakeStuffEvent event = new MakeStuffEvent(resutl);
+        MakeStuffEvent event = new MakeStuffEvent(result);
         eventHandler.callEvent(event);
 
         if(!event.isCancelled()) {

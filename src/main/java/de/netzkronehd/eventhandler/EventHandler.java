@@ -21,9 +21,9 @@ public class EventHandler {
     }
 
     public void registerListener(Listener listener) {
-        for ( Method method : listener.getClass().getDeclaredMethods()) {
-            Preconditions.checkArgument( !method.isAnnotationPresent( Subscribe.class ),
-                    "Listener %s has registered using deprecated subscribe annotation! Please update to @EventHandler.", listener );
+        for (Method method : listener.getClass().getDeclaredMethods()) {
+            Preconditions.checkArgument(!method.isAnnotationPresent(Subscribe.class),
+                    "Listener %s has registered using deprecated subscribe annotation! Please update to @EventHandler.", listener);
         }
         eventBus.register(listener);
 
@@ -43,7 +43,7 @@ public class EventHandler {
             eventBus.getLogger().log(Level.WARNING, "Event {0} took {1}ms to process!", new Object[]
                     {
                             event, elapsed / 1000000
-                    } );
+                    });
         }
         return event;
     }
