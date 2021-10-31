@@ -35,17 +35,21 @@ public class EventHandler {
 
     public <T extends Event> T callEvent(T event) {
         Preconditions.checkNotNull(event, "event");
-        long start = System.nanoTime();
+        final long start = System.currentTimeMillis();
         eventBus.post(event);
         event.postCall();
-        long elapsed = System.nanoTime() - start;
-        if (elapsed > 250000000) {
+        final long elapsed = System.currentTimeMillis() - start;
+        if (elapsed > 250) {
             eventBus.getLogger().log(Level.WARNING, "Event {0} took {1}ms to process!", new Object[]
                     {
-                            event, elapsed / 1000000
+                            event, elapsed
                     });
         }
         return event;
+    }
+
+    public void setLogger(Logger logger) {
+        eventBus.setLogger(logger);
     }
 
 }

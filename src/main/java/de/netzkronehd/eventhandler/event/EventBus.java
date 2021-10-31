@@ -16,14 +16,14 @@ public class EventBus {
     private final Map<Class<?>, Map<Byte, Map<Object, Method[]>>> byListenerAndPriority = new HashMap<>();
     private final Map<Class<?>, EventHandlerMethod[]> byEventBaked = new ConcurrentHashMap<>();
     private final Lock lock = new ReentrantLock();
-    private final Logger logger;
+    private Logger logger;
 
     public EventBus(Logger logger) {
         this.logger = logger;
     }
 
     public void post(Object event) {
-        EventHandlerMethod[] handlers = byEventBaked.get(event.getClass());
+        final EventHandlerMethod[] handlers = byEventBaked.get(event.getClass());
 
         if (handlers != null) {
             for (EventHandlerMethod method : handlers) {
@@ -41,12 +41,12 @@ public class EventBus {
     }
 
     private Map<Class<?>, Map<Byte, Set<Method>>> findHandlers(Object listener) {
-        Map<Class<?>, Map<Byte, Set<Method>>> handler = new HashMap<>();
-        Set<Method> methods = ImmutableSet.<Method>builder().add(listener.getClass().getMethods()).add(listener.getClass().getDeclaredMethods()).build();
+        final Map<Class<?>, Map<Byte, Set<Method>>> handler = new HashMap<>();
+        final Set<Method> methods = ImmutableSet.<Method>builder().add(listener.getClass().getMethods()).add(listener.getClass().getDeclaredMethods()).build();
         for (final Method m : methods) {
             EventHandler annotation = m.getAnnotation(EventHandler.class);
             if (annotation != null) {
-                Class<?>[] params = m.getParameterTypes();
+                final Class<?>[] params = m.getParameterTypes();
                 if (params.length != 1) {
                     logger.log(Level.INFO, "Method {0} in class {1} annotated with {2} does not have single argument", new Object[]
                             {
@@ -54,8 +54,8 @@ public class EventBus {
                             });
                     continue;
                 }
-                Map<Byte, Set<Method>> prioritiesMap = handler.computeIfAbsent(params[0], k -> new HashMap<>());
-                Set<Method> priority = prioritiesMap.computeIfAbsent(annotation.priority(), k -> new HashSet<>());
+                final Map<Byte, Set<Method>> prioritiesMap = handler.computeIfAbsent(params[0], k -> new HashMap<>());
+                final Set<Method> priority = prioritiesMap.computeIfAbsent(annotation.priority(), k -> new HashSet<>());
                 priority.add(m);
             }
         }
@@ -63,13 +63,13 @@ public class EventBus {
     }
 
     public void register(Object listener) {
-        Map<Class<?>, Map<Byte, Set<Method>>> handler = findHandlers(listener);
+        final Map<Class<?>, Map<Byte, Set<Method>>> handler = findHandlers(listener);
         lock.lock();
         try {
             for (Map.Entry<Class<?>, Map<Byte, Set<Method>>> e : handler.entrySet()) {
-                Map<Byte, Map<Object, Method[]>> prioritiesMap = byListenerAndPriority.computeIfAbsent(e.getKey(), k -> new HashMap<>());
+                final Map<Byte, Map<Object, Method[]>> prioritiesMap = byListenerAndPriority.computeIfAbsent(e.getKey(), k -> new HashMap<>());
                 for (Map.Entry<Byte, Set<Method>> entry : e.getValue().entrySet()) {
-                    Map<Object, Method[]> currentPriorityMap = prioritiesMap.computeIfAbsent(entry.getKey(), k -> new HashMap<>());
+                    final Map<Object, Method[]> currentPriorityMap = prioritiesMap.computeIfAbsent(entry.getKey(), k -> new HashMap<>());
                     currentPriorityMap.put(listener, entry.getValue().toArray(new Method[0]));
                 }
                 bakeHandlers(e.getKey());
@@ -80,14 +80,14 @@ public class EventBus {
     }
 
     public void unregister(Object listener) {
-        Map<Class<?>, Map<Byte, Set<Method>>> handler = findHandlers(listener);
+        final Map<Class<?>, Map<Byte, Set<Method>>> handler = findHandlers(listener);
         lock.lock();
         try {
             for (Map.Entry<Class<?>, Map<Byte, Set<Method>>> e : handler.entrySet()) {
-                Map<Byte, Map<Object, Method[]>> prioritiesMap = byListenerAndPriority.get(e.getKey());
+                final Map<Byte, Map<Object, Method[]>> prioritiesMap = byListenerAndPriority.get(e.getKey());
                 if (prioritiesMap != null) {
                     for (Byte priority : e.getValue().keySet()) {
-                        Map<Object, Method[]> currentPriority = prioritiesMap.get(priority);
+                        final Map<Object, Method[]> currentPriority = prioritiesMap.get(priority);
                         if (currentPriority != null) {
                             currentPriority.remove(listener);
                             if (currentPriority.isEmpty()) {
@@ -107,18 +107,18 @@ public class EventBus {
     }
 
     private void bakeHandlers(Class<?> eventClass) {
-        Map<Byte, Map<Object, Method[]>> handlersByPriority = byListenerAndPriority.get(eventClass);
+        final Map<Byte, Map<Object, Method[]>> handlersByPriority = byListenerAndPriority.get(eventClass);
         if (handlersByPriority != null) {
             List<EventHandlerMethod> handlersList = new ArrayList<>(handlersByPriority.size() * 2);
 
 
             byte value = Byte.MIN_VALUE;
             do {
-                Map<Object, Method[]> handlersByListener = handlersByPriority.get(value);
+                final Map<Object, Method[]> handlersByListener = handlersByPriority.get(value);
                 if (handlersByListener != null) {
                     for (Map.Entry<Object, Method[]> listenerHandlers : handlersByListener.entrySet()) {
                         for (Method method : listenerHandlers.getValue()) {
-                            EventHandlerMethod ehm = new EventHandlerMethod(listenerHandlers.getKey(), method);
+                            final EventHandlerMethod ehm = new EventHandlerMethod(listenerHandlers.getKey(), method);
                             handlersList.add(ehm);
                         }
                     }
@@ -131,6 +131,9 @@ public class EventBus {
     }
 
 
+    public void setLogger(Logger logger) {
+        this.logger = logger;
+    }
     public Logger getLogger() {
         return logger;
     }
