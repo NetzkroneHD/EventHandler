@@ -44,7 +44,7 @@ public class EventBus {
         final Map<Class<?>, Map<Byte, Set<Method>>> handler = new HashMap<>();
         final Set<Method> methods = ImmutableSet.<Method>builder().add(listener.getClass().getMethods()).add(listener.getClass().getDeclaredMethods()).build();
         for (final Method m : methods) {
-            EventHandler annotation = m.getAnnotation(EventHandler.class);
+            final EventHandler annotation = m.getAnnotation(EventHandler.class);
             if (annotation != null) {
                 final Class<?>[] params = m.getParameterTypes();
                 if (params.length != 1) {
@@ -109,7 +109,7 @@ public class EventBus {
     private void bakeHandlers(Class<?> eventClass) {
         final Map<Byte, Map<Object, Method[]>> handlersByPriority = byListenerAndPriority.get(eventClass);
         if (handlersByPriority != null) {
-            List<EventHandlerMethod> handlersList = new ArrayList<>(handlersByPriority.size() * 2);
+            final List<EventHandlerMethod> handlersList = new ArrayList<>(handlersByPriority.size() * 2);
 
 
             byte value = Byte.MIN_VALUE;
